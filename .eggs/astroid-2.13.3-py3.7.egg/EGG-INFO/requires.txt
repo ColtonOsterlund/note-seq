@@ -1,0 +1,4 @@
+lazy-object-proxy>=1.4.0
+typed-ast<2.0,>=1.4.0
+wrapt<2,>=1.11
+typing-extensions>=4.0.0

@@ -58,6 +58,44 @@ class PerformanceEvent(object):
   # For Note-based encoding, used instead of NOTE_OFF events.
   DURATION = 5
 
+  # articulation CC events
+  PALMMUTE = 6
+  GHOSTDEADNOTE = 7
+  PICKSCRAPE = 8
+  HARMONIC = 9
+  TRILL = 10
+  VIBRATO = 11
+  TAPPING = 12
+  SINGLESLIDE = 13
+  FINGERING = 14
+  PICKSTROKE = 15
+  SLAPPOP = 16
+  ACCENT = 17
+  WHAMMY = 18
+  FADING = 19
+  GOLPE = 20
+  DYNAMIC = 21
+  BEND = 22
+  LETRING = 23
+  HAIRPIN = 24
+  RASGUEADO = 25
+  TREMOLO = 26
+  EIGHTHSTRING = 27
+  SEVENTHSTRING = 28
+  SIXTHSTRING = 29
+  FIFTHSTRING = 30
+  FOURTHSTRING = 31
+  THIRDSTRING = 32
+  SECONDSTRING = 33
+  FIRSTSTRING = 34
+  BARRE = 35
+  LEGATORUN = 36
+  ARPEGGIO = 37
+  CONTINUOUSSLIDE = 38
+  HAMMERONPULLOFF = 39
+
+
+
   @event_type.validator
   def _check_event(self, attribute, value):
     """Validate event contents."""
@@ -74,6 +112,9 @@ class PerformanceEvent(object):
     elif self.event_type == PerformanceEvent.VELOCITY:
       if not 1 <= self.event_value <= MAX_NUM_VELOCITY_BINS:
         raise ValueError('Invalid velocity value: %s' % self.event_value)
+    elif self.event_type >= PerformanceEvent.PALMMUTE:
+      if not 0 <= self.event_value and not 127 >= self.event_value:
+        raise ValueError('Invalid CC value: %s - %s' % self.event_type, self.event_value)
     else:
       raise ValueError('Invalid event type: %s' % self.event_type)
 
@@ -321,7 +362,8 @@ class BasePerformance(events_lib.EventSequence):
   @staticmethod
   def _from_quantized_sequence(quantized_sequence, start_step,
                                num_velocity_bins, max_shift_steps,
-                               instrument=None):
+                               instrument=None,
+                               is_ctrl_changes=False):
     """Extract a list of events from the given quantized NoteSequence object.
 
     Within a step, new pitches are started with NOTE_ON and existing pitches are
@@ -341,10 +383,18 @@ class BasePerformance(events_lib.EventSequence):
     Returns:
       A list of events.
     """
+
     notes = [note for note in quantized_sequence.notes
              if note.quantized_start_step >= start_step
              and (instrument is None or note.instrument == instrument)]
     sorted_notes = sorted(notes, key=lambda note: (note.start_time, note.pitch))
+
+    # Extract controls
+    ctrls = [ctrl for ctrl in quantized_sequence.control_changes
+                      if ctrl.quantized_step >= start_step
+                      and (instrument is None or ctrl.instrument == instrument)]
+    
+    sorted_ctrls = sorted(ctrls, key=lambda ctrl: ctrl.time)
 
     # Sort all note start and end events.
     onsets = [(note.quantized_start_step, idx, False)
@@ -353,6 +403,9 @@ class BasePerformance(events_lib.EventSequence):
                for idx, note in enumerate(sorted_notes)]
     note_events = sorted(onsets + offsets)
 
+    ctrl_events = [(ctrl.quantized_step, ctrl.control_number, ctrl.control_value)
+                    for idx, ctrl in enumerate(sorted_ctrls)]
+    
     current_step = start_step
     current_velocity_bin = 0
     performance_events = []
@@ -382,17 +435,99 @@ class BasePerformance(events_lib.EventSequence):
               PerformanceEvent(event_type=PerformanceEvent.VELOCITY,
                                event_value=current_velocity_bin))
 
+
+      # Add control events that happen at the current step - this should work for our data as each
+      # CC event was appended to the start of a note thus falling on the same step
+      if is_ctrl_changes:
+        for ctrl_step, ctrl_number, ctrl_value in ctrl_events:
+          if(ctrl_step == current_step):
+            
+            control_change_event = None
+
+            if ctrl_number == 3:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.PALMMUTE, event_value=ctrl_value)
+            elif ctrl_number == 14:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.GHOSTDEADNOTE, event_value=ctrl_value)
+            elif ctrl_number == 15:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.PICKSCRAPE, event_value=ctrl_value)
+            elif ctrl_number == 20:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.HARMONIC, event_value=ctrl_value)
+            elif ctrl_number == 21:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.TRILL, event_value=ctrl_value)
+            elif ctrl_number == 22:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.VIBRATO, event_value=ctrl_value)
+            elif ctrl_number == 23:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.TAPPING, event_value=ctrl_value)
+            elif ctrl_number == 24:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SINGLESLIDE, event_value=ctrl_value)
+            elif ctrl_number == 25:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FINGERING, event_value=ctrl_value)
+            elif ctrl_number == 26:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.PICKSTROKE, event_value=ctrl_value)
+            elif ctrl_number == 27:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SLAPPOP, event_value=ctrl_value)
+            elif ctrl_number == 28:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.ACCENT, event_value=ctrl_value)
+            elif ctrl_number == 29:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.WHAMMY, event_value=ctrl_value)
+            elif ctrl_number == 30:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FADING, event_value=ctrl_value)
+            elif ctrl_number == 31:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.GOLPE, event_value=ctrl_value)
+            elif ctrl_number == 85:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.DYNAMIC, event_value=ctrl_value)
+            elif ctrl_number == 86:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.BEND, event_value=ctrl_value)
+            elif ctrl_number == 87:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.LETRING, event_value=ctrl_value)
+            elif ctrl_number == 88:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.HAIRPIN, event_value=ctrl_value)
+            elif ctrl_number == 89:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.RASGUEADO, event_value=ctrl_value)
+            elif ctrl_number == 102:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.TREMOLO, event_value=ctrl_value)
+            elif ctrl_number == 103:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.EIGHTHSTRING, event_value=ctrl_value)
+            elif ctrl_number == 104:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SEVENTHSTRING, event_value=ctrl_value)
+            elif ctrl_number == 105:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SIXTHSTRING, event_value=ctrl_value)
+            elif ctrl_number == 106:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FIFTHSTRING, event_value=ctrl_value)
+            elif ctrl_number == 107:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FOURTHSTRING, event_value=ctrl_value)
+            elif ctrl_number == 108:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.THIRDSTRING, event_value=ctrl_value)
+            elif ctrl_number == 109:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SECONDSTRING, event_value=ctrl_value)
+            elif ctrl_number == 110:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FIRSTSTRING, event_value=ctrl_value)
+            elif ctrl_number == 111:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.BARRE, event_value=ctrl_value)
+            elif ctrl_number == 112:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.LEGATORUN, event_value=ctrl_value)
+            elif ctrl_number == 113:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.ARPEGGIO, event_value=ctrl_value)
+            elif ctrl_number == 114:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.CONTINUOUSSLIDE, event_value=ctrl_value)
+            elif ctrl_number == 115:
+              control_change_event = PerformanceEvent(event_type=PerformanceEvent.HAMMERONPULLOFF, event_value=ctrl_value)
+            
+            if control_change_event is not None:
+              performance_events.append(control_change_event)
+
       # Add a performance event for this note on/off.
       event_type = (
           PerformanceEvent.NOTE_OFF if is_offset else PerformanceEvent.NOTE_ON)
       performance_events.append(
           PerformanceEvent(event_type=event_type,
                            event_value=sorted_notes[idx].pitch))
-
+    
     return performance_events
 
   @abc.abstractmethod
-  def to_sequence(self, velocity, instrument, program, max_note_duration=None):
+  def to_sequence(self, velocity, instrument, program, max_note_duration=None,
+                  is_ctrl_changes=False):
     """Converts the Performance to NoteSequence proto.
 
     Args:
@@ -412,7 +547,7 @@ class BasePerformance(events_lib.EventSequence):
     pass
 
   def _to_sequence(self, seconds_per_step, velocity, instrument, program,
-                   max_note_duration=None):
+                   max_note_duration=None, is_ctrl_changes=False):
     sequence_start_time = self.start_step * seconds_per_step
 
     sequence = music_pb2.NoteSequence()
@@ -465,6 +600,278 @@ class BasePerformance(events_lib.EventSequence):
         assert self._num_velocity_bins
         velocity = velocity_bin_to_velocity(
             event.event_value, self._num_velocity_bins)
+      elif event.event_type == PerformanceEvent.PALMMUTE:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 3
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.GHOSTDEADNOTE:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 14
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.PICKSCRAPE:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 15
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.HARMONIC:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 20
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.TRILL:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 21
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.VIBRATO:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 22
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.TAPPING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 23
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.SINGLESLIDE:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 24
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.FINGERING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 25
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.PICKSTROKE:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 2
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.SLAPPOP:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 27
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.ACCENT:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 28
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.WHAMMY:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 29
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.FADING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 30
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.GOLPE:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 31
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.DYNAMIC:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 85
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.BEND:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 86
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.LETRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 87
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.HAIRPIN:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 88
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.RASGUEADO:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 89
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.TREMOLO:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 102
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.EIGHTHSTRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 103
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.SEVENTHSTRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 104
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.SIXTHSTRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 105
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.FIFTHSTRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 106
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.FOURTHSTRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 107
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.THIRDSTRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 108
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.SECONDSTRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 109
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.FIRSTSTRING:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 110
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.BARRE:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 111
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.LEGATORUN:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 112
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.ARPEGGIO:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 113
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.CONTINUOUSSLIDE:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 114
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.HAMMERONPULLOFF:
+        if is_ctrl_changes:
+          ctrl = sequence.control_changes.add()
+          # time is the same as pitch start step
+          ctrl.time = step * seconds_per_step + sequence_start_time
+          ctrl.control_number = 115
+          ctrl.control_value = event.event_value
+          ctrl.instrument = instrument
       else:
         raise ValueError('Unknown event type: %s' % event.event_type)
 
@@ -500,7 +907,7 @@ class Performance(BasePerformance):
   def __init__(self, quantized_sequence=None, steps_per_second=None,
                start_step=0, num_velocity_bins=0,
                max_shift_steps=DEFAULT_MAX_SHIFT_STEPS, instrument=None,
-               program=None, is_drum=None):
+               program=None, is_drum=None, is_ctrl_changes=False):
     """Construct a Performance.
 
     Either quantized_sequence or steps_per_second should be supplied.
@@ -521,11 +928,14 @@ class Performance(BasePerformance):
           Ignored if `quantized_sequence` is provided.
       is_drum: Whether or not this performance consists of drums, or None if not
           specified. Ignored if `quantized_sequence` is provided.
+      is_ctrl_changes: Where or not this performance considers the control 
+          change events.
 
     Raises:
       ValueError: If both or neither of `quantized_sequence` or
           `steps_per_second` is specified.
     """
+
     if (quantized_sequence, steps_per_second).count(None) != 1:
       raise ValueError(
           'Must specify exactly one of quantized_sequence or steps_per_second')
@@ -536,7 +946,8 @@ class Performance(BasePerformance):
           quantized_sequence.quantization_info.steps_per_second)
       self._events = self._from_quantized_sequence(
           quantized_sequence, start_step, num_velocity_bins,
-          max_shift_steps=max_shift_steps, instrument=instrument)
+          max_shift_steps=max_shift_steps, instrument=instrument,
+          is_ctrl_changes=is_ctrl_changes)
       program, is_drum = _program_and_is_drum_from_sequence(
           quantized_sequence, instrument)
 
@@ -559,7 +970,8 @@ class Performance(BasePerformance):
                   velocity=100,
                   instrument=0,
                   program=None,
-                  max_note_duration=None):
+                  max_note_duration=None,
+                  is_ctrl_changes=False):
     """Converts the Performance to NoteSequence proto.
 
     Args:
@@ -572,6 +984,7 @@ class Performance(BasePerformance):
           exists).
       max_note_duration: Maximum note duration in seconds to allow. Notes longer
           than this will be truncated. If None, notes can be any length.
+      is_ctrl_changes: If control changes are being modelled
 
     Returns:
       A NoteSequence proto.
@@ -582,7 +995,8 @@ class Performance(BasePerformance):
         velocity=velocity,
         instrument=instrument,
         program=program,
-        max_note_duration=max_note_duration)
+        max_note_duration=max_note_duration,
+        is_ctrl_changes=is_ctrl_changes)
 
 
 class MetricPerformance(BasePerformance):
@@ -591,7 +1005,7 @@ class MetricPerformance(BasePerformance):
   def __init__(self, quantized_sequence=None, steps_per_quarter=None,
                start_step=0, num_velocity_bins=0,
                max_shift_quarters=DEFAULT_MAX_SHIFT_QUARTERS, instrument=None,
-               program=None, is_drum=None):
+               program=None, is_drum=None, is_ctrl_changes=False):
     """Construct a MetricPerformance.
 
     Either quantized_sequence or steps_per_quarter should be supplied.
@@ -629,7 +1043,7 @@ class MetricPerformance(BasePerformance):
       self._events = self._from_quantized_sequence(
           quantized_sequence, start_step, num_velocity_bins,
           max_shift_steps=self._steps_per_quarter * max_shift_quarters,
-          instrument=instrument)
+          instrument=instrument, is_ctrl_changes=is_ctrl_changes)
       program, is_drum = _program_and_is_drum_from_sequence(
           quantized_sequence, instrument)
 
