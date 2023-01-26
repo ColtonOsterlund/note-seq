@@ -93,6 +93,7 @@ class PerformanceEvent(object):
   ARPEGGIO = 37
   CONTINUOUSSLIDE = 38
   HAMMERONPULLOFF = 39
+  PITCHBEND = 40
 
 
 
@@ -394,7 +395,14 @@ class BasePerformance(events_lib.EventSequence):
                       if ctrl.quantized_step >= start_step
                       and (instrument is None or ctrl.instrument == instrument)]
     
+    # Extract pitchbends
+    pbends = [pbend for pbend in quantized_sequence.pitch_bends
+                      if pbend.quantized_step >= start_step
+                      and (instrument is None or pbend.instrument == instrument)]
+    
     sorted_ctrls = sorted(ctrls, key=lambda ctrl: ctrl.time)
+
+    sorted_pbends = sorted(pbends, key=lambda pbend: pbend.time)
 
     # Sort all note start and end events.
     onsets = [(note.quantized_start_step, idx, False)
@@ -405,6 +413,9 @@ class BasePerformance(events_lib.EventSequence):
 
     ctrl_events = [(ctrl.quantized_step, ctrl.control_number, ctrl.control_value)
                     for idx, ctrl in enumerate(sorted_ctrls)]
+    
+    pbend_events = [(pbend.quantized_step, pbend.bend)
+                    for idx, pbend in enumerate(sorted_pbends)]
     
     current_step = start_step
     current_velocity_bin = 0
@@ -441,80 +452,80 @@ class BasePerformance(events_lib.EventSequence):
       if is_ctrl_changes:
         for ctrl_step, ctrl_number, ctrl_value in ctrl_events:
           if(ctrl_step == current_step):
-            
-            control_change_event = None
 
             if ctrl_number == 3:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.PALMMUTE, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.PALMMUTE, event_value=ctrl_value))
             elif ctrl_number == 14:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.GHOSTDEADNOTE, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.GHOSTDEADNOTE, event_value=ctrl_value))
             elif ctrl_number == 15:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.PICKSCRAPE, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.PICKSCRAPE, event_value=ctrl_value))
             elif ctrl_number == 20:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.HARMONIC, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.HARMONIC, event_value=ctrl_value))
             elif ctrl_number == 21:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.TRILL, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.TRILL, event_value=ctrl_value))
             elif ctrl_number == 22:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.VIBRATO, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.VIBRATO, event_value=ctrl_value))
             elif ctrl_number == 23:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.TAPPING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.TAPPING, event_value=ctrl_value))
             elif ctrl_number == 24:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SINGLESLIDE, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.SINGLESLIDE, event_value=ctrl_value))
             elif ctrl_number == 25:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FINGERING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.FINGERING, event_value=ctrl_value))
             elif ctrl_number == 26:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.PICKSTROKE, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.PICKSTROKE, event_value=ctrl_value))
             elif ctrl_number == 27:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SLAPPOP, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.SLAPPOP, event_value=ctrl_value))
             elif ctrl_number == 28:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.ACCENT, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.ACCENT, event_value=ctrl_value))
             elif ctrl_number == 29:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.WHAMMY, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.WHAMMY, event_value=ctrl_value))
             elif ctrl_number == 30:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FADING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.FADING, event_value=ctrl_value))
             elif ctrl_number == 31:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.GOLPE, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.GOLPE, event_value=ctrl_value))
             elif ctrl_number == 85:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.DYNAMIC, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.DYNAMIC, event_value=ctrl_value))
             elif ctrl_number == 86:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.BEND, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.BEND, event_value=ctrl_value))
             elif ctrl_number == 87:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.LETRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.LETRING, event_value=ctrl_value))
             elif ctrl_number == 88:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.HAIRPIN, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.HAIRPIN, event_value=ctrl_value))
             elif ctrl_number == 89:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.RASGUEADO, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.RASGUEADO, event_value=ctrl_value))
             elif ctrl_number == 102:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.TREMOLO, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.TREMOLO, event_value=ctrl_value))
             elif ctrl_number == 103:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.EIGHTHSTRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.EIGHTHSTRING, event_value=ctrl_value))
             elif ctrl_number == 104:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SEVENTHSTRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.SEVENTHSTRING, event_value=ctrl_value))
             elif ctrl_number == 105:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SIXTHSTRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.SIXTHSTRING, event_value=ctrl_value))
             elif ctrl_number == 106:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FIFTHSTRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.FIFTHSTRING, event_value=ctrl_value))
             elif ctrl_number == 107:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FOURTHSTRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.FOURTHSTRING, event_value=ctrl_value))
             elif ctrl_number == 108:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.THIRDSTRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.THIRDSTRING, event_value=ctrl_value))
             elif ctrl_number == 109:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.SECONDSTRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.SECONDSTRING, event_value=ctrl_value))
             elif ctrl_number == 110:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.FIRSTSTRING, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.FIRSTSTRING, event_value=ctrl_value))
             elif ctrl_number == 111:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.BARRE, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.BARRE, event_value=ctrl_value))
             elif ctrl_number == 112:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.LEGATORUN, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.LEGATORUN, event_value=ctrl_value))
             elif ctrl_number == 113:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.ARPEGGIO, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.ARPEGGIO, event_value=ctrl_value))
             elif ctrl_number == 114:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.CONTINUOUSSLIDE, event_value=ctrl_value)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.CONTINUOUSSLIDE, event_value=ctrl_value))
             elif ctrl_number == 115:
-              control_change_event = PerformanceEvent(event_type=PerformanceEvent.HAMMERONPULLOFF, event_value=ctrl_value)
-            
-            if control_change_event is not None:
-              performance_events.append(control_change_event)
+              performance_events.append(PerformanceEvent(event_type=PerformanceEvent.HAMMERONPULLOFF, event_value=ctrl_value))
+
+        # Add pitch bend performance events
+        for pbend_step, pbend_bend in pbend_events:
+          if(pbend_step == current_step):
+            performance_events.append(PerformanceEvent(event_type=PerformanceEvent.PITCHBEND, event_value=pbend_bend))
 
       # Add a performance event for this note on/off.
       event_type = (
@@ -872,6 +883,13 @@ class BasePerformance(events_lib.EventSequence):
           ctrl.control_number = 115
           ctrl.control_value = event.event_value
           ctrl.instrument = instrument
+      elif event.event_type == PerformanceEvent.PITCHBEND:
+        if is_ctrl_changes:
+          pbend = sequence.pitch_bends.add()
+          # time is the same as pitch start step
+          pbend.time = step * seconds_per_step + sequence_start_time
+          pbend.bend = event.event_value * 100 # we had bucketed the value to save model-weight and encoding space
+          pbend.instrument = instrument
       else:
         raise ValueError('Unknown event type: %s' % event.event_type)
 

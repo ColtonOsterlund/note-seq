@@ -281,73 +281,76 @@ class PerformanceOneHotEncoding(encoder_decoder.OneHotEncoding):
           (PerformanceEvent.VELOCITY, 1, num_velocity_bins))
     if is_ctrl_changes:
       self._event_ranges.append(
-          (PerformanceEvent.PALMMUTE, 0, 127))
+          (PerformanceEvent.PALMMUTE, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.GHOSTDEADNOTE, 0, 127))
+          (PerformanceEvent.GHOSTDEADNOTE, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.PICKSCRAPE, 0, 127))
+          (PerformanceEvent.PICKSCRAPE, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.HARMONIC, 0, 127))
+          (PerformanceEvent.HARMONIC, 0, 6))
       self._event_ranges.append(
-          (PerformanceEvent.TRILL, 0, 127))
+          (PerformanceEvent.TRILL, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.VIBRATO, 0, 127))
+          (PerformanceEvent.VIBRATO, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.TAPPING, 0, 127))
+          (PerformanceEvent.TAPPING, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.SINGLESLIDE, 0, 127))
+          (PerformanceEvent.SINGLESLIDE, 0, 4))
       self._event_ranges.append(
-          (PerformanceEvent.FINGERING, 0, 127))
+          (PerformanceEvent.FINGERING, 0, 5))
       self._event_ranges.append(
-          (PerformanceEvent.PICKSTROKE, 0, 127))
+          (PerformanceEvent.PICKSTROKE, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.SLAPPOP, 0, 127))
+          (PerformanceEvent.SLAPPOP, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.ACCENT, 0, 127))
+          (PerformanceEvent.ACCENT, 0, 4))
       self._event_ranges.append(
-          (PerformanceEvent.WHAMMY, 0, 127))
+          (PerformanceEvent.WHAMMY, 0, 4))
       self._event_ranges.append(
-          (PerformanceEvent.FADING, 0, 127))
+          (PerformanceEvent.FADING, 0, 3))
       self._event_ranges.append(
-          (PerformanceEvent.GOLPE, 0, 127))
+          (PerformanceEvent.GOLPE, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.DYNAMIC, 0, 127))
+          (PerformanceEvent.DYNAMIC, 0, 114))
       self._event_ranges.append(
-          (PerformanceEvent.BEND, 0, 127))
+          (PerformanceEvent.BEND, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.LETRING, 0, 127))
+          (PerformanceEvent.LETRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.HAIRPIN, 0, 127))
+          (PerformanceEvent.HAIRPIN, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.RASGUEADO, 0, 127))
+          (PerformanceEvent.RASGUEADO, 0, 17))
       self._event_ranges.append(
-          (PerformanceEvent.TREMOLO, 0, 127))
+          (PerformanceEvent.TREMOLO, 0, 3))
       self._event_ranges.append(
-          (PerformanceEvent.EIGHTHSTRING, 0, 127))
+          (PerformanceEvent.EIGHTHSTRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.SEVENTHSTRING, 0, 127))
+          (PerformanceEvent.SEVENTHSTRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.SIXTHSTRING, 0, 127))
+          (PerformanceEvent.SIXTHSTRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.FIFTHSTRING, 0, 127))
+          (PerformanceEvent.FIFTHSTRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.FOURTHSTRING, 0, 127))
+          (PerformanceEvent.FOURTHSTRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.THIRDSTRING, 0, 127))
+          (PerformanceEvent.THIRDSTRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.SECONDSTRING, 0, 127))
+          (PerformanceEvent.SECONDSTRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.FIRSTSTRING, 0, 127))
+          (PerformanceEvent.FIRSTSTRING, 0, 1))
       self._event_ranges.append(
           (PerformanceEvent.BARRE, 0, 127))
       self._event_ranges.append(
-          (PerformanceEvent.LEGATORUN, 0, 127))
+          (PerformanceEvent.LEGATORUN, 0, 3))
       self._event_ranges.append(
-          (PerformanceEvent.ARPEGGIO, 0, 127))
+          (PerformanceEvent.ARPEGGIO, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.CONTINUOUSSLIDE, 0, 127))
+          (PerformanceEvent.CONTINUOUSSLIDE, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.HAMMERONPULLOFF, 0, 127)) 
+          (PerformanceEvent.HAMMERONPULLOFF, 0, 2)) 
+      self._event_ranges.append(
+          (PerformanceEvent.PITCHBEND, 0, 80)) # To conserve space, we are bucketing the pitch bends into 100 buckets
+                                                # as well as only considering the upper half-range (8192 // 100)
     self._max_shift_steps = max_shift_steps
 
   @property

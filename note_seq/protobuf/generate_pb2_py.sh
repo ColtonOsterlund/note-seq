@@ -36,3 +36,5 @@ function gen_proto {
 
 gen_proto note_seq/protobuf/generator
 gen_proto note_seq/protobuf/music
+
+$SHELL

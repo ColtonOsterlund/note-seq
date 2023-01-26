@@ -1,3 +1,4 @@
+# pylint: skip-file
 # Copyright 2021 The Magenta Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -424,4 +425,4 @@ _sym_db.RegisterMessage(GeneratorBundle.BundleDetails)
 
 
 _GENERATOROPTIONS_ARGSENTRY._options = None
-# @@protoc_insertion_point(module_scope)
+# @@protoc_insertion_point(module_scope)

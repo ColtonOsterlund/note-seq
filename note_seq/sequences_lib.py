@@ -947,9 +947,10 @@ def _quantize_notes(note_sequence, steps_per_second):
     if note.quantized_end_step > note_sequence.total_quantized_steps:
       note_sequence.total_quantized_steps = note.quantized_end_step
 
-  # Also quantize control changes and text annotations.
+  # Also quantize control changes, text annotations and pitch bends.
   for event in itertools.chain(note_sequence.control_changes,
-                               note_sequence.text_annotations):
+                               note_sequence.text_annotations,
+                               note_sequence.pitch_bends):
     # Quantize the event time, disallowing negative time.
     event.quantized_step = quantize_to_step(event.time, steps_per_second)
     if event.quantized_step < 0:

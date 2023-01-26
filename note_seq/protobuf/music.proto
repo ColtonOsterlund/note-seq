@@ -244,6 +244,8 @@ message NoteSequence {
   message PitchBend {
     // Time in seconds.
     double time = 1;
+    // Quantized time in steps.
+    int64 quantized_step = 6;
     // Pitch bend amount in the range (-8192, 8191).
     int32 bend = 2;
     int32 instrument = 3;
