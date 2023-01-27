@@ -311,9 +311,9 @@ class PerformanceOneHotEncoding(encoder_decoder.OneHotEncoding):
       self._event_ranges.append(
           (PerformanceEvent.GOLPE, 0, 2))
       self._event_ranges.append(
-          (PerformanceEvent.DYNAMIC, 0, 114))
+          (PerformanceEvent.DYNAMIC, 0, 8))
       self._event_ranges.append(
-          (PerformanceEvent.BEND, 0, 1))
+          (PerformanceEvent.BEND, 0, 12))
       self._event_ranges.append(
           (PerformanceEvent.LETRING, 0, 1))
       self._event_ranges.append(
@@ -339,7 +339,7 @@ class PerformanceOneHotEncoding(encoder_decoder.OneHotEncoding):
       self._event_ranges.append(
           (PerformanceEvent.FIRSTSTRING, 0, 1))
       self._event_ranges.append(
-          (PerformanceEvent.BARRE, 0, 127))
+          (PerformanceEvent.BARRE, 0, 24))
       self._event_ranges.append(
           (PerformanceEvent.LEGATORUN, 0, 3))
       self._event_ranges.append(
@@ -348,9 +348,6 @@ class PerformanceOneHotEncoding(encoder_decoder.OneHotEncoding):
           (PerformanceEvent.CONTINUOUSSLIDE, 0, 2))
       self._event_ranges.append(
           (PerformanceEvent.HAMMERONPULLOFF, 0, 2)) 
-      self._event_ranges.append(
-          (PerformanceEvent.PITCHBEND, 0, 80)) # To conserve space, we are bucketing the pitch bends into 100 buckets
-                                                # as well as only considering the upper half-range (8192 // 100)
     self._max_shift_steps = max_shift_steps
 
   @property

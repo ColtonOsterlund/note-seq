@@ -93,8 +93,6 @@ class PerformanceEvent(object):
   ARPEGGIO = 37
   CONTINUOUSSLIDE = 38
   HAMMERONPULLOFF = 39
-  PITCHBEND = 40
-
 
 
   @event_type.validator
@@ -522,11 +520,6 @@ class BasePerformance(events_lib.EventSequence):
             elif ctrl_number == 115:
               performance_events.append(PerformanceEvent(event_type=PerformanceEvent.HAMMERONPULLOFF, event_value=ctrl_value))
 
-        # Add pitch bend performance events
-        for pbend_step, pbend_bend in pbend_events:
-          if(pbend_step == current_step):
-            performance_events.append(PerformanceEvent(event_type=PerformanceEvent.PITCHBEND, event_value=pbend_bend))
-
       # Add a performance event for this note on/off.
       event_type = (
           PerformanceEvent.NOTE_OFF if is_offset else PerformanceEvent.NOTE_ON)
@@ -883,13 +876,6 @@ class BasePerformance(events_lib.EventSequence):
           ctrl.control_number = 115
           ctrl.control_value = event.event_value
           ctrl.instrument = instrument
-      elif event.event_type == PerformanceEvent.PITCHBEND:
-        if is_ctrl_changes:
-          pbend = sequence.pitch_bends.add()
-          # time is the same as pitch start step
-          pbend.time = step * seconds_per_step + sequence_start_time
-          pbend.bend = event.event_value * 100 # we had bucketed the value to save model-weight and encoding space
-          pbend.instrument = instrument
       else:
         raise ValueError('Unknown event type: %s' % event.event_type)
 

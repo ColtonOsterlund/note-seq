@@ -152,7 +152,7 @@ def midi_to_note_sequence(midi_data):
     pitch_bend.instrument = instrument
     pitch_bend.program = program
     pitch_bend.time = midi_pitch_bend.time
-    pitch_bend.bend = midi_pitch_bend.pitch // 100 # bucketing pitch bends to save space
+    pitch_bend.bend = midi_pitch_bend.pitch
     pitch_bend.is_drum = is_drum
 
   for program, instrument, is_drum, midi_control_change in midi_control_changes:
