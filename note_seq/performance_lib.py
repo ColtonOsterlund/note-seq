@@ -449,7 +449,7 @@ class BasePerformance(events_lib.EventSequence):
       # CC event was appended to the start of a note thus falling on the same step
       if is_ctrl_changes:
         for ctrl_step, ctrl_number, ctrl_value in ctrl_events:
-          if(ctrl_step == current_step):
+          if(ctrl_step == current_step and not is_offset):
 
             if ctrl_number == 3:
               performance_events.append(PerformanceEvent(event_type=PerformanceEvent.PALMMUTE, event_value=ctrl_value))
@@ -954,6 +954,10 @@ class Performance(BasePerformance):
           is_ctrl_changes=is_ctrl_changes)
       program, is_drum = _program_and_is_drum_from_sequence(
           quantized_sequence, instrument)
+      
+      # print("\nEvent Stream: ")
+      # for event in self._events:
+      #   print(event)
 
     else:
       self._steps_per_second = steps_per_second
